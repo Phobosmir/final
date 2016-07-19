@@ -9,8 +9,12 @@ void print_usage(char *prog_name){
 }
 
 int get_opt_args(int argc, char **argv, char *ip4_addr, int *port, char *work_dir) {
-    int opt;
-    while ((opt = getopt(argc, argv, "h:p:d:")) != -1 ) {
+    if (argc != 7) {
+        print_usage(argv[0]);
+        return 1;
+    }
+    int opt = 0;
+    while ((opt = getopt(argc, argv, "h:p:d:")) != -1) {
         switch (opt) {
             case 'h':
                 strcpy(ip4_addr, optarg);
@@ -24,11 +28,8 @@ int get_opt_args(int argc, char **argv, char *ip4_addr, int *port, char *work_di
             default:
                 print_usage(argv[0]);
                 return 1;
-        }
-    }
-    if (optind >= argc) {
-        print_usage(argv[0]);
-        return 1;
+            }
+        
     }
     return 0;
 }
