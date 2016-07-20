@@ -22,7 +22,6 @@ int single_server_guard_lock(){
         perror("guard lock, write");
         return -1;
     }
-
     return 0;
 }
 

@@ -5,6 +5,7 @@ include_directories(include)
 set(SRC_EXE src/main.c 
             src/arguments.c 
             src/daemonize.c
-            src/logger.c)
+            src/logger.c
+            src/server.c)
 
 add_executable(final ${SRC_EXE})
