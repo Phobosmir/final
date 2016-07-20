@@ -1,8 +1,10 @@
 #include <linux/limits.h>
 #include <stdlib.h>
 #include <unistd.h>
+#include <stdio.h>
 #include "arguments.h"
 #include "daemonize.h"
+#include "logger.h"
 
 int main(int argc, char **argv) {
     char ip4_addr[15];
@@ -12,15 +14,24 @@ int main(int argc, char **argv) {
     if (get_opt_args(argc, argv, ip4_addr, &port, work_dir)){
         exit(EXIT_FAILURE);
     }
+    if (chdir(work_dir) == -1) {
+        perror("chdir");
+        exit(EXIT_FAILURE);
+    }
+
+    char logstr[255];
+    sprintf(logstr, "\nStarting server at %s:%d, work dir: %s", ip4_addr, port, work_dir);
+    log_message(logstr);
+
     int daemon_status = daemonize();
     if (daemon_status == 0){
         // parent exit
         exit(EXIT_SUCCESS);
     } else if (daemon_status < 0) {
+        log_message("Daemon starting failed");
         exit(EXIT_FAILURE);
     }
 
-    chdir(work_dir);
 
     sleep(10);
     return EXIT_SUCCESS;

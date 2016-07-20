@@ -5,21 +5,25 @@
 #include <sys/stat.h>
 #include <fcntl.h>
 #include <signal.h>
+#include "logger.h"
 
 int single_server_guard_lock(){
     int lfp = open("server.lock", O_RDWR | O_CREAT, 0640);
     if (lfp == -1){
         perror("guard lock, open");
+        log_message("Cannot open guard file");
         return -1;
     }
     if (lockf(lfp, F_TLOCK, 0) == -1){
         perror("guard lock, lockf");
+        log_message("Cannot lock guard file");
         return -1;
     }
     char str[10];
     sprintf(str, "%d\n", getpid());
     if (write(lfp, str, strlen(str)) == -1) {
         perror("guard lock, write");
+        log_message("Cannot write to guard file");
         return -1;
     }
 
@@ -40,12 +44,14 @@ int daemonize(){
     pid_t pid = fork();
     if (pid < 0) {
         perror("fork");
+        log_message("fork process error");
         return -1;
     }
     else if (pid > 0)
         return 0;
 
     if (setsid() == (pid_t)-1) {
+        log_message("setsid error");
         perror("setsid");
         return -1;
     }
