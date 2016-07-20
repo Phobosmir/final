@@ -19,6 +19,9 @@ int main(int argc, char **argv) {
     } else if (daemon_status < 0) {
         exit(EXIT_FAILURE);
     }
+
+    chdir(work_dir);
+
     sleep(10);
     return EXIT_SUCCESS;
 }
