@@ -6,6 +6,10 @@
 #include "daemonize.h"
 #include "logger.h"
 
+#include <sys/socket.h>
+#include <netinet/in.h>
+#include <arpa/inet.h>
+
 int main(int argc, char **argv) {
     char ip4_addr[15];
     int port;
@@ -33,6 +37,23 @@ int main(int argc, char **argv) {
     }
 
 
+    int master_socket = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
+    if (master_socket == -1) {
+        perror("socket");
+        exit(EXIT_FAILURE);
+    }
+    struct sockaddr_in socket_address;
+    socket_address.sin_family = AF_INET;
+    socket_address.sin_port = htons(port);
+
+    if (inet_pton(AF_INET, ip4_addr, &socket_address.sin_addr) != 1) {
+        // log_message();
+        exit(EXIT_FAILURE);
+    }
+    
     sleep(10);
+
+    close(master_socket);
+
     return EXIT_SUCCESS;
 }
