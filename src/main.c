@@ -1,4 +1,5 @@
 #include <linux/limits.h>
+
 #include <stdlib.h>
 #include <unistd.h>
 #include <stdio.h>
@@ -6,6 +7,8 @@
 #include "daemonize.h"
 #include "logger.h"
 #include "server.h"
+
+#include <sys/socket.h>
 
 int main(int argc, char **argv) {
     char ip4_addr[15];
@@ -39,8 +42,13 @@ int main(int argc, char **argv) {
 	exit(EXIT_FAILURE);
     }
     
-
-    sleep(10);
+    while(1){
+        int inc_socket = accept(master_socket, 0, 0);
+        if (inc_socket == -1) {
+            perror("accept");
+            log_message("accept failed");
+        }
+    }
     
     if (stop_server(master_socket) == -1) {
         log_message("Server stop failed");
