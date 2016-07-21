@@ -1,6 +1,7 @@
 #include <signal.h>
 #include <stdlib.h>
 #include <stdio.h>
+#include <sys/socket.h>
 
 #include "server.h"
 #include "server_lowlvl.h"
@@ -8,7 +9,6 @@
 #include "logger.h"
 #include "ioservice.h"
 
-#include <sys/socket.h>
 
 
 void server_stop_signal_handler(int sig) {
@@ -52,6 +52,8 @@ void server_run(char *ip4_addr, int port) {
         server_close();
         exit(EXIT_FAILURE);
     }
+    
+    ioservice_create_worker();
 
     while(1){
         int inc_socket = accept(server_socket, 0, 0);
