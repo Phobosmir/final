@@ -18,11 +18,11 @@ int process_request(int fd){
         close(fd);
     }
     else if (recv_res > 0 ) {
-        log_message("new incoming socket");
-        log_message(buffer);
+        //log_message("new incoming socket");
+        //log_message(buffer);
 	char req_uri[REQ_MAX_LENGTH];
         parse_request(buffer, req_uri);
-        log_message(req_uri);
+        //log_message(req_uri);
 	if (is_file_exists(req_uri)){
 	    send_data(fd, req_uri);
 	}
