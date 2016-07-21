@@ -49,8 +49,7 @@ void server_run(char *ip4_addr, int port) {
     while(1){
         int inc_socket = accept(server_socket, 0, 0);
         if (inc_socket == -1) {
-            perror("accept");
-            log_message("accept failed");
+            log_perror("accept");
         }
     }
     

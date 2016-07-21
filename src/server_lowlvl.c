@@ -5,10 +5,12 @@
 
 #include <sys/stat.h>
 #include <fcntl.h>
-#include <stdlib.h>
 #include <unistd.h>
 #include <stdio.h>
 #include <string.h>
+
+#include "logger.h"
+
 #define LOCKFILE "server.lock"
 
 static int serverlockfile_fd;
@@ -16,17 +18,17 @@ static int serverlockfile_fd;
 int single_server_guard_lock(){
     int lock_fd = open(LOCKFILE, O_RDWR | O_CREAT, 0640);
     if (lock_fd == -1){
-        perror("guard lock, open");
+        log_perror("guard lock, open");
         return -1;
     }
     if (lockf(lock_fd, F_TLOCK, 0) == -1){
-        perror("guard lock, lockf");
+        log_perror("guard lock, lockf");
         return -1;
     }
     char str[10];
     sprintf(str, "%d\n", getpid());
     if (write(lock_fd, str, strlen(str)) == -1) {
-        perror("guard lock, write");
+        log_perror("guard lock, write");
         return -1;
     }
     return lock_fd;
@@ -34,15 +36,15 @@ int single_server_guard_lock(){
 
 int single_server_guard_unlock(int lock_fd){
     if (lockf(lock_fd, F_ULOCK, 0) == -1){
-        perror("guard unlock, lockf");
+        log_perror("guard unlock, lockf");
         return -1;
     }
     if (close(lock_fd) == -1) {
-        perror("guard unlock, close");
+        log_perror("guard unlock, close");
         return -1;
     }
     if (unlink(LOCKFILE) == -1) {
-        perror("guard unlock, unlink");
+        log_perror("guard unlock, unlink");
         return -1;
     }
     return 0;
@@ -65,20 +67,23 @@ int start_server(char *ip4_addr, int port) {
         return -1;
     int master_socket = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
     if (master_socket == -1) {
-        perror("socket");
+        log_perror("socket");
 	return -1;
     }
     struct sockaddr_in socket_address;
     socket_address.sin_family = AF_INET;
     socket_address.sin_port = htons(port);
-
-    if (inet_pton(AF_INET, ip4_addr, &socket_address.sin_addr) != 1) {
-        // log_message();
+    int s = inet_pton(AF_INET, ip4_addr, &socket_address.sin_addr); 
+    if (s == 0) {
+        log_message("inet_pton: invalid ip addr");
 	return -1;
+    } else if (s == -1) {
+        log_perror("inet_pton");
+        return -1;
     }
     if (bind(master_socket, (struct sockaddr*)&socket_address, 
 	sizeof(socket_address)) != 0){
-	perror("bind");
+	log_perror("bind");
 	return -1;
     }
     /*if (set_nonblock(master_socket) == -1) {
@@ -86,7 +91,7 @@ int start_server(char *ip4_addr, int port) {
         return -1;
     }*/
     if (listen(master_socket, SOMAXCONN)) {
-	perror("listen");
+	log_perror("listen");
 	return -1;
     }
 
@@ -96,11 +101,11 @@ int start_server(char *ip4_addr, int port) {
 int stop_server(int master_socket){
     int status = 0;
     if (shutdown(master_socket, SHUT_RDWR)){
-        perror("shutdown");
+        log_perror("shutdown");
         status = -1;
     }
     if (close(master_socket) == -1) {
-        perror("close socket");
+        log_perror("close socket");
         status = -1;
     }
     if (single_server_guard_unlock(serverlockfile_fd) == -1) {
