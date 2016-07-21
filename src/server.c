@@ -14,27 +14,45 @@
 
 #define LOCKFILE "server.lock"
 
+static int serverlockfile_fd;
+
 int single_server_guard_lock(){
-    int lfp = open(LOCKFILE, O_RDWR | O_CREAT, 0640);
-    if (lfp == -1){
+    int lock_fd = open(LOCKFILE, O_RDWR | O_CREAT, 0640);
+    if (lock_fd == -1){
         perror("guard lock, open");
         return -1;
     }
-    if (lockf(lfp, F_TLOCK, 0) == -1){
+    if (lockf(lock_fd, F_TLOCK, 0) == -1){
         perror("guard lock, lockf");
         return -1;
     }
     char str[10];
     sprintf(str, "%d\n", getpid());
-    if (write(lfp, str, strlen(str)) == -1) {
+    if (write(lock_fd, str, strlen(str)) == -1) {
         perror("guard lock, write");
+        return -1;
+    }
+    return lock_fd;
+}
+
+int single_server_guard_unlock(int lock_fd){
+    if (lockf(lock_fd, F_ULOCK, 0) == -1){
+        perror("guard unlock, lockf");
+        return -1;
+    }
+    if (close(lock_fd) == -1) {
+        perror("guard unlock, close");
+        return -1;
+    }
+    if (unlink(LOCKFILE) == -1) {
+        perror("guard unlock, unlink");
         return -1;
     }
     return 0;
 }
 
 int start_server(char *ip4_addr, int port) {
-    if (single_server_guard_lock())
+    if ((serverlockfile_fd = single_server_guard_lock()) == -1)
         return -1;
     int master_socket = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
     if (master_socket == -1) {
@@ -66,5 +84,6 @@ int start_server(char *ip4_addr, int port) {
 int stop_server(int master_socket){
     shutdown(master_socket, SHUT_RDWR);
     close(master_socket);
+    single_server_guard_unlock(serverlockfile_fd);
     return 0;
 }

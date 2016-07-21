@@ -40,7 +40,8 @@ int main(int argc, char **argv) {
     }
 
     sleep(10);
-
+    
+    stop_server(master_socket);
 
     return EXIT_SUCCESS;
 }
