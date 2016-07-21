@@ -16,6 +16,18 @@
 
 static int serverlockfile_fd;
 
+int set_nonblock(int fd){
+    int flags;
+#if defined(O_NONBLOCK)
+    if (-1 == (flags = fcntl(fd, F_GETFL, 0)))
+        flags = 0;
+    return fcntl(fd, F_SETFL, flags | O_NONBLOCK);
+#else
+    flags = 1;
+    return ioctl(fd, FIOBIO, &flags);
+#endif
+}
+
 int single_server_guard_lock(){
     int lock_fd = open(LOCKFILE, O_RDWR | O_CREAT, 0640);
     if (lock_fd == -1){
@@ -72,7 +84,10 @@ int start_server(char *ip4_addr, int port) {
 	perror("bind");
 	return -1;
     }
-
+    if (set_nonblock(master_socket) == -1) {
+        perror("set_nonblock");
+        return -1;
+    }
     if (listen(master_socket, SOMAXCONN)) {
 	perror("listen");
 	return -1;

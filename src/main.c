@@ -38,6 +38,7 @@ int main(int argc, char **argv) {
 	log_message("Socket init failed");
 	exit(EXIT_FAILURE);
     }
+    
 
     sleep(10);
     
