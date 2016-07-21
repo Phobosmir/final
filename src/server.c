@@ -6,8 +6,10 @@
 #include "server_lowlvl.h"
 #include "daemonize.h"
 #include "logger.h"
+#include "ioservice.h"
 
 #include <sys/socket.h>
+
 
 void server_stop_signal_handler(int sig) {
     log_message("terminate signal catched");
@@ -45,17 +47,23 @@ void server_run(char *ip4_addr, int port) {
 	log_message("Socket init failed");
 	exit(EXIT_FAILURE);
     }
-    
+    if (ioservice_init() == -1){ 
+        log_message("IO service init failed");
+        server_close();
+        exit(EXIT_FAILURE);
+    }
+
     while(1){
         int inc_socket = accept(server_socket, 0, 0);
-        if (inc_socket == -1) {
+        if (inc_socket == -1) 
             log_perror("accept");
-        }
+        if (ioservice_add(inc_socket) == -1) 
+            log_message("socket processing error");
     }
-    
 }
 
 void server_close(){
+    ioservice_close();
     if (stop_server(server_socket) == -1) {
         log_message("Server stop failed");
         exit(EXIT_FAILURE);

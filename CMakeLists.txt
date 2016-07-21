@@ -7,6 +7,7 @@ set(SRC_EXE src/main.c
             src/daemonize.c
             src/logger.c
             src/server.c
-            src/server_lowlvl.c)
+            src/server_lowlvl.c
+            src/ioservice.c)
 
 add_executable(final ${SRC_EXE})
