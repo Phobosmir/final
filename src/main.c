@@ -4,11 +4,9 @@
 #include <unistd.h>
 #include <stdio.h>
 #include "arguments.h"
-#include "daemonize.h"
 #include "logger.h"
 #include "server.h"
 
-#include <sys/socket.h>
 
 int main(int argc, char **argv) {
     char ip4_addr[15];
@@ -23,37 +21,7 @@ int main(int argc, char **argv) {
         exit(EXIT_FAILURE);
     }
 
-    char logstr[255];
-    sprintf(logstr, "\nStarting server at %s:%d, work dir: %s", ip4_addr, port, work_dir);
-    log_message(logstr);
+    server_run(ip4_addr, port);
 
-    int daemon_status = daemonize();
-    if (daemon_status == 0){
-        // parent exit
-        exit(EXIT_SUCCESS);
-    } else if (daemon_status < 0) {
-        log_message("Daemon starting failed");
-        exit(EXIT_FAILURE);
-    }
-    
-    int master_socket = start_server(ip4_addr, port);
-    if (master_socket == -1) {
-	log_message("Socket init failed");
-	exit(EXIT_FAILURE);
-    }
-    
-    while(1){
-        int inc_socket = accept(master_socket, 0, 0);
-        if (inc_socket == -1) {
-            perror("accept");
-            log_message("accept failed");
-        }
-    }
-    
-    if (stop_server(master_socket) == -1) {
-        log_message("Server stop failed");
-        exit(EXIT_FAILURE);
-    }
-    log_message("Server stopped");
     return EXIT_SUCCESS;
 }

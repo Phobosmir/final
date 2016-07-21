@@ -1,3 +1,2 @@
 
-int start_server(char *ip4_addr, int port);
-int stop_server(int master_socket);
+int server_run(char *ip4_addr, int port);

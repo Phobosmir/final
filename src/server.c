@@ -11,6 +11,8 @@
 #include <string.h>
 
 #include "server.h"
+#include "daemonize.h"
+#include "logger.h"
 
 #define LOCKFILE "server.lock"
 
@@ -97,14 +99,53 @@ int start_server(char *ip4_addr, int port) {
 }
 
 int stop_server(int master_socket){
-    if (shutdown(master_socket, SHUT_RDWR))
-        return -1;
+    int status = 0;
+    if (shutdown(master_socket, SHUT_RDWR)){
+        perror("shutdown");
+        status = -1;
+    }
     if (close(master_socket) == -1) {
         perror("close socket");
-        return -1;
+        status = -1;
     }
     if (single_server_guard_unlock(serverlockfile_fd) == -1) {
-        return -1;
+        status = -1;
     }
-    return 0;
+    return status;
+}
+
+int server_run(char *ip4_addr, int port) {
+    char logstr[255];
+    sprintf(logstr, "\nStarting server at %s:%d", 
+            ip4_addr, port);
+    log_message(logstr);
+
+    int daemon_status = daemonize();
+    if (daemon_status == 0){
+        // parent exit
+        exit(EXIT_SUCCESS);
+    } else if (daemon_status < 0) {
+        log_message("Daemon starting failed");
+        exit(EXIT_FAILURE);
+    }
+    
+    int master_socket = start_server(ip4_addr, port);
+    if (master_socket == -1) {
+	log_message("Socket init failed");
+	exit(EXIT_FAILURE);
+    }
+    
+    while(1){
+        int inc_socket = accept(master_socket, 0, 0);
+        if (inc_socket == -1) {
+            perror("accept");
+            log_message("accept failed");
+        }
+    }
+    
+    if (stop_server(master_socket) == -1) {
+        log_message("Server stop failed");
+        exit(EXIT_FAILURE);
+    }
+    log_message("Server stopped");
 }
