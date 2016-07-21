@@ -1,3 +1,3 @@
 
 void server_run(char *ip4_addr, int port);
-void server_stop();
+void server_close();

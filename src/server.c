@@ -11,8 +11,16 @@
 
 void server_stop_signal_handler(int sig) {
     log_message("terminate signal catched");
-    server_stop();
+    server_close();
     exit(EXIT_SUCCESS);
+}
+
+void setup_signals(){
+    signal(SIGCHLD, SIG_IGN); 
+    signal(SIGTSTP, SIG_IGN);
+    signal(SIGTTOU, SIG_IGN);
+    signal(SIGTTIN, SIG_IGN);
+    signal(SIGTERM, server_stop_signal_handler);
 }
 
 static int server_socket;
@@ -30,12 +38,7 @@ void server_run(char *ip4_addr, int port) {
         log_message("Daemon starting failed");
         exit(EXIT_FAILURE);
     }
-    
-    signal(SIGCHLD, SIG_IGN); 
-    signal(SIGTSTP, SIG_IGN);
-    signal(SIGTTOU, SIG_IGN);
-    signal(SIGTTIN, SIG_IGN);
-    signal(SIGTERM, server_stop_signal_handler);
+    setup_signals();
 
     server_socket = start_server(ip4_addr, port);
     if (server_socket == -1) {
@@ -53,7 +56,7 @@ void server_run(char *ip4_addr, int port) {
     
 }
 
-void server_stop(){
+void server_close(){
     if (stop_server(server_socket) == -1) {
         log_message("Server stop failed");
         exit(EXIT_FAILURE);
