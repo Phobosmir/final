@@ -1,7 +1,6 @@
 #include <unistd.h>
 #include <stdio.h>
 #include <string.h>
-#include <signal.h>
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <fcntl.h>
@@ -32,6 +31,5 @@ int daemonize(){
     }
     close_opened_fds();
     umask(027);
-    signal(SIGCHLD, SIG_IGN); 
     return 1;
 }
