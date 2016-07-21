@@ -41,7 +41,6 @@ int main(int argc, char **argv) {
 
     sleep(10);
 
-    close(master_socket);
 
     return EXIT_SUCCESS;
 }
