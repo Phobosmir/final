@@ -41,7 +41,10 @@ int main(int argc, char **argv) {
 
     sleep(10);
     
-    stop_server(master_socket);
-
+    if (stop_server(master_socket) == -1) {
+        log_message("Server stop failed");
+        exit(EXIT_FAILURE);
+    }
+    log_message("Server stopped");
     return EXIT_SUCCESS;
 }

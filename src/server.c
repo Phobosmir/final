@@ -82,8 +82,14 @@ int start_server(char *ip4_addr, int port) {
 }
 
 int stop_server(int master_socket){
-    shutdown(master_socket, SHUT_RDWR);
-    close(master_socket);
-    single_server_guard_unlock(serverlockfile_fd);
+    if (shutdown(master_socket, SHUT_RDWR))
+        return -1;
+    if (close(master_socket) == -1) {
+        perror("close socket");
+        return -1;
+    }
+    if (single_server_guard_unlock(serverlockfile_fd) == -1) {
+        return -1;
+    }
     return 0;
 }
